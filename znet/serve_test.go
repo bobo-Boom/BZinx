@@ -45,7 +45,7 @@ func TestServer(t *testing.T) {
 	  服务端测试
 	*/
 	//1\创建一个server句柄 s
-	s:=NewServe("[BZinx V0.1]")
+	s:=NewServe("[BZinx V0.2]")
 
 	go ClientTest()
 

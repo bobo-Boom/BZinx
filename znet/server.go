@@ -2,6 +2,7 @@ package znet
 
 import (
 	"boom.com/bzinx/ziface"
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -17,6 +18,18 @@ type Server struct {
 	IPVersion string
 	//服务器的端口
 	Port int
+}
+
+//定义当前客户端连接的handle api
+func CallBackToClient(conn *net.TCPConn,data []byte ,cnt int)error  {
+	//回显业务
+	fmt.Println("[Conn Handle] CallBackToClient...")
+	if _, err := conn.Write(data[:cnt]);err!=nil{
+		fmt.Println("write back buf err ",err)
+		return errors.New("CallBackToClient error")
+	}
+	return nil
+
 }
 
 func (s *Server) Start ()  {
@@ -38,37 +51,28 @@ func (s *Server) Start ()  {
 			return
 		}
 		fmt.Println("start BZinx Server    ",s.Name,"success,now listenning")
-		
+
+		//TODO server.go 应该有一个自动生成ID的方法
+		var cid uint32
+		cid =0
+
 		//启动server网络连接业务
 		for  {
 			
-			//阻塞等待客户端建立连接请求
+			//1、阻塞等待客户端建立连接请求
 			conn, err := listenner.Accept()
 			if err!=nil{
 				fmt.Println("Accept err ",err)
 				return
 			}
 
-			//1、TODO Server.start()设置服务器最大连接控制，如果超过最大连接，那么则关闭此新的连接
+			//2、TODO Server.start()设置服务器最大连接控制，如果超过最大连接，那么则关闭此新的连接
 
-			//2、TODO Server.start()处理该连接请求的业务方法，此时应该有handler和conn绑定的
+			//3、处理该连接请求的业务方法，此时应该有handler和conn绑定的
+			dealConn := NewConnection(conn.(*net.TCPConn), cid, CallBackToClient)
+			cid++
 
-			//我们暂时做一个最大512字节的回显服务
-			go func() {
-				//不断的循环从客户端获取数据
-				for   {
-				   buf :=make([]byte,512)
-					cnt, err := conn.Read(buf)
-					if err!=nil{
-						fmt.Println("rec buf err",err)
-						continue
-					}
-					if _,err:=conn.Write(buf[:cnt]);err!=nil{
-						fmt.Println("write back buf err",err)
-						continue
-					}
-				}
-			}()
+			go  dealConn.Start()
 		}
 
 	}()

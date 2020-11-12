@@ -1,6 +1,7 @@
 package znet
 
 import (
+	"boom.com/bzinx/utils"
 	"boom.com/bzinx/ziface"
 	"errors"
 	"fmt"
@@ -36,7 +37,9 @@ func CallBackToClient(conn *net.TCPConn,data []byte ,cnt int)error  {
 }
 
 func (s *Server) Start ()  {
-	fmt.Printf("[Start] Server listenner ai IP : %s, port : %d, is starting\n",s.Ip,s.Port)
+	fmt.Printf("[START] Serer name : %s,listenner at IP : %s, Port %d is starting \n",s.Name,s.Ip,s.Port)
+	fmt.Printf("[BZINX] Version : %s, MaxConn : %d, MaxPacketSize: %d\n",
+		utils.GlobalObject.Version,utils.GlobalObject.MaxConn,utils.GlobalObject.MaxPackeitSize )
 
 	//开启一个go去做服务器端的listen业务
 	go func() {
@@ -53,7 +56,7 @@ func (s *Server) Start ()  {
 			fmt.Println("listen",s.IPVersion,"err",err)
 			return
 		}
-		fmt.Println("start BZinx Server    ",s.Name,"success,now listenning")
+		fmt.Println("start BZinx Server ",s.Name,"success,now listenning")
 
 		//TODO server.go 应该有一个自动生成ID的方法
 		var cid uint32
@@ -110,12 +113,14 @@ func (s *Server)AddRouter(router ziface.IRouter){
  创建一个服务句柄
 */
 
-func NewServe (name string ) ziface.IServer  {
+func NewServe () ziface.IServer  {
+	//先初始化全局配置
+	utils.GlobalObject.Reload()
 	s:=&Server{
-		Name:name,
+		Name:utils.GlobalObject.Name,
 		IPVersion:"tcp4",
-		Ip:"0.0.0.0",
-		Port:7777,
+		Ip:utils.GlobalObject.Host,
+		Port:utils.GlobalObject.TcpPort,
 		Router:nil,
 	}
 	return s
